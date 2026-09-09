@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PashuSuraksha — AI Livestock Health Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --forest:#173C2E; --forest-deep:#0E271E; --field:#4F7A52; --field-light:#7FA06E;
+    --cream:#F6F1E4; --cream-dark:#EAE1CB; --paper:#FFFDF8; --soil:#8A6A46;
+    --amber:#C97F17; --amber-soft:#F4E3C2; --red:#B8412F; --red-soft:#F3DCD5;
+    --green:#2F6B4F; --green-soft:#DCEBDE; --blue:#2E5F7C; --blue-soft:#DCE9EF;
+    --ink:#1C2621; --ink-soft:#5B655D; --line:#D9CFB6;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:'IBM Plex Sans',sans-serif;background:var(--cream);color:var(--ink);}
+  h1,h2,h3,.display{font-family:'Fraunces',serif;}
+  .mono{font-family:'IBM Plex Mono',monospace;}
+  a{text-decoration:none;color:inherit;}
+  button{font-family:inherit;cursor:pointer;border:none;}
+  .view{display:none;}
+  .view.active{display:block;}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 20px;}
+  .wrap-sm{max-width:760px;margin:0 auto;padding:0 20px;}
+
+  /* ---------- NAV ---------- */
+  #nav{position:sticky;top:0;z-index:50;background:var(--forest-deep);}
+  #nav .bar{display:flex;align-items:center;justify-content:space-between;height:64px;gap:16px;}
+  #nav .brand{display:flex;align-items:center;gap:8px;color:#fff;font-size:20px;background:none;}
+  #nav .links{display:flex;gap:22px;flex-wrap:wrap;}
+  #nav .links button{background:none;color:#D8D0BE;font-size:14px;padding:4px 0;}
+  #nav .links button.active{color:var(--field-light);}
+  #nav .right{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .pill{border-radius:999px;padding:6px 12px;font-size:12px;font-weight:600;display:inline-flex;align-items:center;gap:6px;}
+  .pill-online{background:#1F4A38;color:#9FD9B4;}
+  .pill-offline{background:#4A2A22;color:#E8AA9B;}
+  .pill-role{display:flex;background:#1F4A38;border-radius:999px;padding:2px;}
+  .pill-role button{background:none;color:#B9CFC1;border-radius:999px;padding:6px 12px;font-size:12px;font-weight:600;}
+  .pill-role button.active{background:var(--field);color:#fff;}
+  .btn-cta{background:var(--amber);color:#fff;border-radius:999px;padding:9px 18px;font-size:13px;font-weight:700;}
+  #nav .mobile-toggle{display:none;background:none;color:#fff;font-size:22px;}
+  @media (max-width:1024px){
+    #nav .links, #nav .right{display:none;}
+    #nav .mobile-toggle{display:block;}
+    #nav.open .links, #nav.open .right{display:flex;flex-direction:column;align-items:flex-start;padding:14px 20px;}
+    #nav.open .right{flex-direction:row;flex-wrap:wrap;}
+  }
+
+  /* ---------- shared bits ---------- */
+  .eyebrow{display:flex;align-items:center;gap:10px;margin-bottom:14px;color:var(--soil);font-size:12px;letter-spacing:.15em;text-transform:uppercase;}
+  .eyebrow::before{content:"";width:30px;height:1px;background:var(--soil);}
+  .card{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:22px;}
+  .grid{display:grid;gap:18px;}
+  .grid-2{grid-template-columns:repeat(2,1fr);}
+  .grid-3{grid-template-columns:repeat(3,1fr);}
+  .grid-4{grid-template-columns:repeat(4,1fr);}
+  .grid-5{grid-template-columns:repeat(5,1fr);}
+  @media(max-width:900px){.grid-2,.grid-3,.grid-4,.grid-5{grid-template-columns:repeat(2,1fr);}}
+  @media(max-width:560px){.grid-2,.grid-3,.grid-4,.grid-5{grid-template-columns:1fr;}}
+  .badge{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:5px 12px;font-size:13px;font-weight:600;}
+  .badge-sm{padding:3px 10px;font-size:11px;}
+  .badge-high{background:var(--red-soft);color:var(--red);}
+  .badge-mod{background:var(--amber-soft);color:var(--amber);}
+  .badge-low{background:var(--green-soft);color:var(--green);}
+  .status{border-radius:999px;padding:3px 10px;font-size:11px;font-weight:600;}
+  .status-pending{background:var(--amber-soft);color:var(--amber);}
+  .status-verified{background:var(--blue-soft);color:var(--blue);}
+  .status-resolved,.status-healthy{background:var(--green-soft);color:var(--green);}
+  .status-attention{background:var(--red-soft);color:var(--red);}
+  .status-monitoring{background:var(--amber-soft);color:var(--amber);}
+  .btn{border-radius:999px;padding:12px 22px;font-weight:700;font-size:14px;}
+  .btn-primary{background:var(--amber);color:#fff;}
+  .btn-forest{background:var(--forest);color:#fff;}
+  .btn-blue{background:var(--blue);color:#fff;}
+  .btn-outline{background:none;border:1px solid var(--soil);color:var(--soil);}
+  .btn-outline-red{background:none;border:1px solid var(--red);color:var(--red);}
+  .chip{border-radius:999px;padding:6px 14px;font-size:12px;font-weight:600;border:1px solid var(--line);background:var(--cream);color:var(--ink);}
+  .chip.active{background:var(--forest);color:#fff;border-color:var(--forest);}
+  input,textarea,select{width:100%;border-radius:10px;padding:10px 12px;font-family:inherit;font-size:14px;border:1px solid var(--line);background:var(--cream);color:var(--ink);outline:none;}
+  table{width:100%;border-collapse:collapse;font-size:14px;}
+  th{text-align:left;font-family:'IBM Plex Mono',monospace;font-size:11px;text-transform:uppercase;color:var(--soil);padding-bottom:10px;}
+  td{padding:10px 8px 10px 0;border-top:1px solid var(--line);}
+
+  /* ---------- LANDING ---------- */
+  .hero{position:relative;overflow:hidden;background:var(--forest);padding:70px 0 90px;}
+  .hero .grid2{display:grid;grid-template-columns:1.1fr 1fr;gap:50px;align-items:center;}
+  @media(max-width:900px){.hero .grid2{grid-template-columns:1fr;}}
+  .hero h1{color:#fff;font-size:46px;line-height:1.08;margin:0 0 20px;}
+  .hero h1 span{color:var(--field-light);}
+  .hero p.lead{color:#D8D0BE;font-size:17px;max-width:520px;margin-bottom:28px;}
+  .tags{display:flex;gap:16px;flex-wrap:wrap;margin-top:20px;}
+  .tags span{font-family:'IBM Plex Mono',monospace;font-size:12px;color:#8FA898;}
+  .field-row{width:100%;height:26px;display:block;}
+  section{padding:80px 0;}
+  .sec-dark{background:var(--forest);color:#fff;}
+  .sec-dark h2{color:#fff;}
+  .sec-dark .card, .step-card{background:#1F4A38;border-radius:18px;padding:22px;}
+  .step-card p{color:#B9CFC1;}
+  .problem-card .icon,.feat-icon{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:16px;font-size:18px;}
+  footer{background:var(--forest-deep);color:#8FA898;padding:50px 0 30px;}
+  footer .top{display:flex;justify-content:space-between;flex-wrap:wrap;gap:30px;margin-bottom:30px;}
+  footer h4{color:#fff;font-family:'Fraunces',serif;margin:0 0 6px;}
+  footer a,button.footlink{display:block;color:#D8D0BE;background:none;font-size:14px;margin-bottom:8px;text-align:left;}
+
+  /* ---------- APP PAGES ---------- */
+  .page{background:var(--cream);min-height:100vh;padding:40px 0;}
+  .quick-actions{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:24px 0 36px;}
+  @media(max-width:700px){.quick-actions{grid-template-columns:repeat(2,1fr);}}
+  .qa-card{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:18px;text-align:left;}
+  .animal-card{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:18px;text-align:left;width:100%;}
+  .animal-card .top-row{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;}
+  .symptom-wrap{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px;}
+  .upload-box{border:2px dashed var(--line);border-radius:18px;background:var(--cream);display:flex;flex-direction:column;align-items:center;padding:40px 20px;margin-bottom:16px;}
+  .kpi{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:18px;display:flex;justify-content:space-between;align-items:flex-start;}
+  .kpi .icon-box{border-radius:12px;padding:9px;}
+  .timeline-item{display:flex;gap:12px;}
+  .timeline-dot{width:8px;height:8px;border-radius:50%;background:var(--soil);margin-top:6px;flex-shrink:0;}
+  .timeline-line{width:1px;flex:1;background:var(--line);margin:4px 0;}
+  #map-svg circle{cursor:pointer;}
+</style>
+</head>
+<body>
+
+<nav id="nav">
+  <div class="wrap bar">
+    <button class="brand" onclick="showView('landing')">🐄 <span class="display">PashuSuraksha</span></button>
+    <div class="links" id="navLinks"></div>
+    <div class="right">
+      <span class="pill" id="dbPill" style="background:#3A3A22;color:#D9CC8F;">● demo data</span>
+      <button class="pill pill-online" id="onlinePill" onclick="toggleOnline()">📶 Online</button>
+      <select id="langSelect" style="width:auto;background:none;border:1px solid #3A5548;color:#D8D0BE;border-radius:999px;padding:6px 10px;font-size:12px;">
+        <option>English</option><option>हिन्दी</option><option>मराठी</option><option>తెలుగు</option><option>தமிழ்</option><option>বাংলা</option>
+      </select>
+      <div class="pill-role">
+        <button id="roleFarmerBtn" class="active" onclick="setRole('farmer')">Farmer</button>
+        <button id="roleVetBtn" onclick="setRole('vet')">Veterinarian</button>
+      </div>
+      <button class="btn-cta" onclick="showView('analyze')">Get Started</button>
+    </div>
+    <button class="mobile-toggle" onclick="document.getElementById('nav').classList.toggle('open')">☰</button>
+  </div>
+</nav>
+
+<div id="root"></div>
+
+<script>
+/* ============================= DATA ============================= */
+const ANIMALS = [
+  { id:"COW-1024", species:"Cattle", breed:"Gir", age:"4 yrs", sex:"Female", farm:"Rampur Farm", location:"Rampur, MP", status:"Attention", photo:"🐄", lastCheck:"2 days ago" },
+  { id:"BUF-0512", species:"Buffalo", breed:"Murrah", age:"6 yrs", sex:"Female", farm:"Rampur Farm", location:"Rampur, MP", status:"Healthy", photo:"🐃", lastCheck:"1 week ago" },
+  { id:"GOT-2231", species:"Goat", breed:"Jamunapari", age:"2 yrs", sex:"Male", farm:"Rampur Farm", location:"Rampur, MP", status:"Healthy", photo:"🐐", lastCheck:"3 days ago" },
+  { id:"SHP-0087", species:"Sheep", breed:"Deccani", age:"3 yrs", sex:"Female", farm:"Rampur Farm", location:"Rampur, MP", status:"Monitoring", photo:"🐑", lastCheck:"Today" },
+];
+let CASES = [
+  { id:"CASE-4471", animal:"COW-1024", species:"Cattle", farmer:"Ramesh Yadav", location:"Rampur, MP", risk:"High", condition:"Suspected FMD", date:"Today, 9:12 AM", status:"Pending Review", vet:"Unassigned" },
+  { id:"CASE-4468", animal:"GOT-1187", species:"Goat", farmer:"Sunita Devi", location:"Katni, MP", risk:"Moderate", condition:"Possible PPR", date:"Today, 7:40 AM", status:"Pending Review", vet:"Unassigned" },
+  { id:"CASE-4460", animal:"BUF-0342", species:"Buffalo", farmer:"Iqbal Khan", location:"Jabalpur, MP", risk:"Low", condition:"Minor skin irritation", date:"Yesterday", status:"Verified", vet:"Dr. Anjali Mehta" },
+  { id:"CASE-4452", animal:"SHP-0921", species:"Sheep", farmer:"Geeta Bai", location:"Damoh, MP", risk:"High", condition:"Suspected PPR outbreak", date:"Yesterday", status:"Verified", vet:"Dr. R. Kulkarni" },
+  { id:"CASE-4447", animal:"COW-0765", species:"Cattle", farmer:"Manoj Singh", location:"Rampur, MP", risk:"Moderate", condition:"Lumpy skin disease watch", date:"2 days ago", status:"Resolved", vet:"Dr. Anjali Mehta" },
+];
+const SYMPTOMS = ["Fever","Loss of appetite","Coughing","Nasal discharge","Skin lesions","Swelling","Lethargy","Difficulty breathing","Diarrhea","Reduced milk production"];
+const DANGER_SYMPTOMS = ["Fever","Skin lesions","Difficulty breathing","Nasal discharge"];
+const VACCINES = [
+  { vaccine:"FMD (Foot & Mouth Disease)", given:"12 Feb 2026", next:"12 Aug 2026", status:"Upcoming" },
+  { vaccine:"HS (Haemorrhagic Septicaemia)", given:"03 Jan 2026", next:"03 Jan 2027", status:"Scheduled" },
+  { vaccine:"Brucellosis", given:"20 Jun 2025", next:"One-time (calfhood)", status:"Complete" },
+];
+const MEDICAL_HISTORY = [
+  { date:"14 Jun 2026", event:"Veterinary visit", detail:"Mild lameness, treated with anti-inflammatory course." },
+  { date:"02 Mar 2026", event:"Recovered", detail:"Recovered fully from mastitis treatment." },
+  { date:"18 Feb 2026", event:"Treatment", detail:"Mastitis detected in rear left quarter, antibiotic course started." },
+  { date:"12 Feb 2026", event:"Illness reported", detail:"Farmer reported swelling and reduced milk yield." },
+];
+const AI_ASSESSMENTS = [
+  { date:"Today, 9:12 AM", risk:"High", condition:"Suspected FMD", verified:"Pending veterinary review" },
+  { date:"18 Feb 2026", risk:"Moderate", condition:"Possible mastitis", verified:"Verified by Dr. Anjali Mehta" },
+  { date:"03 Nov 2025", risk:"Low", condition:"No significant indicators", verified:"Not required" },
+];
+const HEALTH_TREND = [88,90,85,76,82,71];
+const HEALTH_MONTHS = ["Mar","Apr","May","Jun","Jul","Aug"];
+const REGIONS = [
+  { name:"Rampur", x:130, y:90, level:"high", cases:6 },
+  { name:"Katni", x:230, y:60, level:"moderate", cases:3 },
+  { name:"Jabalpur", x:300, y:140, level:"normal", cases:1 },
+  { name:"Damoh", x:180, y:190, level:"high", cases:5 },
+  { name:"Sagar", x:320, y:220, level:"moderate", cases:2 },
+  { name:"Chhindwara", x:400, y:100, level:"normal", cases:0 },
+  { name:"Narsinghpur", x:250, y:260, level:"normal", cases:1 },
+];
+const COLORS = { high:"var(--red)", moderate:"var(--amber)", normal:"var(--green)" };
+
+/* ============================= STATE ============================= */
+let state = { view:"landing", role:"farmer", online:true, syncCount:3, symptoms:["Fever","Skin lesions"], imgQuality:"good" };
+
+/* ============================= HELPERS ============================= */
+function riskClass(r){ r=r.toLowerCase(); return r==="high"?"badge-high":r==="moderate"?"badge-mod":"badge-low"; }
+function riskBadge(risk,sm){ return `<span class="badge ${sm?'badge-sm':''} ${riskClass(risk)}">${risk==='High'?'⚠':risk==='Moderate'?'⏱':'✓'} ${risk} risk</span>`; }
+function statusPill(s){
+  const map={"Pending Review":"status-pending","Verified":"status-verified","Resolved":"status-resolved","Healthy":"status-healthy","Attention":"status-attention","Monitoring":"status-monitoring"};
+  return `<span class="status ${map[s]||''}">${s}</span>`;
+}
+function assessRisk(symptoms){
+  const hits = symptoms.filter(s=>DANGER_SYMPTOMS.includes(s)).length;
+  if(hits>=2) return {risk:"High", condition:"Suspected Foot-and-Mouth Disease (FMD)", confidence:78+hits*2};
+  if(hits===1) return {risk:"Moderate", condition:"Possible early-stage infection", confidence:60};
+  return {risk:"Low", condition:"No significant indicators detected", confidence:55};
+}
+
+/* ============================= NAV ============================= */
+const PUBLIC_LINKS = [["landing","Home"],["how","How It Works"],["tech","AI Technology"],["regional","Disease Monitoring"],["impact","Impact"]];
+const FARMER_LINKS = [["farmer","My Farm"],["analyze","Analyze Animal"],["animal","Health Records"]];
+const VET_LINKS = [["vet","Case Dashboard"],["regional","Regional Monitor"],["animal","Animal Records"]];
+
+function renderNavLinks(){
+  const inApp = !["landing","how","tech","impact"].includes(state.view);
+  const links = inApp ? (state.role==="farmer"?FARMER_LINKS:VET_LINKS) : PUBLIC_LINKS;
+  document.getElementById("navLinks").innerHTML = links.map(([k,l])=>
+    `<button class="${state.view===k?'active':''}" onclick="showView('${k}')">${l}</button>`).join("");
+}
+function toggleOnline(){
+  state.online = !state.online;
+  const pill = document.getElementById("onlinePill");
+  if(state.online){ pill.className="pill pill-online"; pill.innerHTML="📶 Online"; }
+  else { pill.className="pill pill-offline"; pill.innerHTML=`📴 Offline · ${state.syncCount} pending`; }
+  render();
+}
+function setRole(role){
+  state.role = role;
+  document.getElementById("roleFarmerBtn").classList.toggle("active", role==="farmer");
+  document.getElementById("roleVetBtn").classList.toggle("active", role==="vet");
+  showView(role==="farmer"?"farmer":"vet");
+}
+function showView(v){
+  state.view = v;
+  document.getElementById("nav").classList.remove("open");
+  renderNavLinks();
+  render();
+  window.scrollTo(0,0);
+}
+
+/* ============================= LANDING ============================= */
+function landingHTML(){
+  return `
+  <section class="hero">
+    <div class="wrap">
+      <div class="grid2">
+        <div>
+          <div class="pill" style="background:#1F4A38;color:#9FD9B4;margin-bottom:20px;">🌱 AI-assisted animal health, built for the field</div>
+          <h1>Early Detection.<br/>Healthier Livestock.<br/><span>Stronger Rural Communities.</span></h1>
+          <p class="lead">An AI-powered livestock health platform that combines image recognition, symptom analysis, and contextual health data to detect potential diseases early and connect high-risk cases with veterinary support.</p>
+          <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:10px;">
+            <button class="btn btn-primary" onclick="showView('analyze')">Analyze Livestock →</button>
+            <button class="btn" style="border:1px solid #3A5548;color:#fff;background:none;" onclick="showView('how')">Explore How It Works</button>
+          </div>
+          <div class="tags">
+            <span>· AI-Powered</span><span>· Multimodal Analysis</span><span>· Offline-First</span><span>· Multi-Language</span><span>· Veterinary Verified</span>
+          </div>
+        </div>
+        <div class="card" style="border-radius:24px;">
+          <div style="display:flex;justify-content:space-between;margin-bottom:14px;">
+            <span class="mono" style="font-size:11px;color:var(--ink-soft);">CASE-4471 · Live scan preview</span>
+            ${riskBadge("High",true)}
+          </div>
+          <div style="background:var(--cream-dark);border-radius:16px;height:150px;display:flex;align-items:center;justify-content:center;font-size:60px;margin-bottom:16px;">🐄</div>
+          <div style="font-size:14px;display:flex;flex-direction:column;gap:8px;">
+            <div style="display:flex;justify-content:space-between;"><span style="color:var(--ink-soft);">Symptoms detected</span><b>Fever, lesions</b></div>
+            <div style="display:flex;justify-content:space-between;"><span style="color:var(--ink-soft);">AI confidence</span><b>82%</b></div>
+            <div style="display:flex;justify-content:space-between;"><span style="color:var(--ink-soft);">Vet review</span><b style="color:var(--amber);">Requested</b></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <div class="eyebrow">The problem</div>
+      <h2 style="font-size:34px;max-width:600px;margin:0 0 40px;color:var(--forest);">Livestock disease can spread before help arrives.</h2>
+      <div class="grid grid-4">
+        ${[["⏱","Late Detection","Disease symptoms may go unnoticed until the condition becomes serious."],
+           ["🩺","Limited Veterinary Access","Rural farmers may have difficulty accessing veterinary professionals quickly."],
+           ["📴","Connectivity Challenges","Remote communities may have unreliable internet connectivity."],
+           ["📄","Fragmented Health Records","Vaccination and medical records are often difficult to maintain and access."]]
+          .map(([i,t,b])=>`<div class="card problem-card"><div class="icon" style="background:var(--red-soft);">${i}</div><h3 style="font-size:18px;margin:0 0 8px;">${t}</h3><p style="font-size:14px;color:var(--ink-soft);margin:0;">${b}</p></div>`).join("")}
+      </div>
+    </div>
+  </section>
+
+  <section class="sec-dark" id="how">
+    <div class="wrap">
+      <div class="eyebrow" style="color:var(--field-light);">the workflow</div>
+      <h2 style="font-size:34px;max-width:600px;margin:0 0 40px;">One intelligent platform for livestock health.</h2>
+      <div class="grid grid-4">
+        ${[["01","Report","Farmer uploads an animal photo and reports symptoms.","📷"],
+           ["02","Analyze","AI models analyze visual and textual information.","⚡"],
+           ["03","Alert","High-risk cases are escalated to veterinarians.","⚠"],
+           ["04","Manage","Animal health, vaccination, and medical records are stored digitally.","📋"]]
+          .map(([n,t,b,i])=>`<div class="step-card"><div style="display:flex;gap:10px;align-items:center;margin-bottom:12px;"><span class="mono" style="color:var(--field-light);font-size:12px;">${n}</span><span>${i}</span></div><h3 style="color:#fff;margin:0 0 8px;font-size:20px;">${t}</h3><p style="margin:0;font-size:14px;">${b}</p></div>`).join("")}
+      </div>
+      <button class="btn btn-primary" style="margin-top:30px;" onclick="showView('analyze')">Try the demo flow →</button>
+    </div>
+  </section>
+
+  <section id="tech">
+    <div class="wrap">
+      <div class="eyebrow">ai technology</div>
+      <h2 style="font-size:34px;max-width:600px;color:var(--forest);margin:0 0 10px;">Multimodal AI for smarter livestock health.</h2>
+      <p style="max-width:560px;color:var(--ink-soft);margin-bottom:40px;">The platform combines computer vision, symptom intelligence, contextual health data, and a fused risk-assessment layer.</p>
+      <div class="grid grid-2">
+        <div style="display:flex;flex-direction:column;gap:14px;">
+          ${[["📷","Computer Vision","Analyzes livestock images for visible signs and abnormalities."],
+             ["🎙","Symptom Intelligence","Processes farmer-reported symptoms using natural-language/symptom parsing."],
+             ["📍","Contextual Health Data","Uses animal history and regional information."],
+             ["⚡","Risk Assessment","Combines multiple signals to prioritize cases."]]
+            .map(([i,t,b])=>`<div class="card" style="display:flex;gap:14px;"><div class="feat-icon" style="background:var(--green-soft);flex-shrink:0;">${i}</div><div><h4 style="margin:0 0 4px;font-size:16px;">${t}</h4><p style="margin:0;font-size:14px;color:var(--ink-soft);">${b}</p></div></div>`).join("")}
+        </div>
+        <div style="background:var(--forest-deep);border-radius:18px;padding:26px;">
+          ${["Image data → Image preprocessing → Computer vision model","Symptom data → Symptom parsing → Language / classification model","Health & regional data → Contextual analysis"]
+            .map(r=>`<div style="background:#1F4A38;border-radius:12px;padding:14px;margin-bottom:8px;color:#fff;font-size:14px;">${r}</div>`).join("")}
+          <div style="text-align:center;color:#3A5548;margin:10px 0;">↓</div>
+          <div style="background:var(--amber);border-radius:12px;padding:14px;text-align:center;color:#fff;font-weight:700;font-size:14px;">Multimodal fusion → Risk assessment</div>
+          <div style="text-align:center;color:#3A5548;margin:10px 0;">↓</div>
+          <div class="grid grid-3" style="gap:8px;">
+            <div style="background:var(--green-soft);color:var(--green);border-radius:8px;padding:8px;text-align:center;font-size:12px;font-weight:700;">Low</div>
+            <div style="background:var(--amber-soft);color:var(--amber);border-radius:8px;padding:8px;text-align:center;font-size:12px;font-weight:700;">Moderate</div>
+            <div style="background:var(--red-soft);color:var(--red);border-radius:8px;padding:8px;text-align:center;font-size:12px;font-weight:700;">High</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec-dark" id="impact">
+    <div class="wrap">
+      <div class="eyebrow" style="color:var(--field-light);">impact</div>
+      <h2 style="font-size:34px;max-width:600px;margin:0 0 40px;">Impact designed around people, not metrics we haven't earned.</h2>
+      <div class="grid grid-3">
+        ${[["Social Impact",["Protect rural livelihoods","Improve animal welfare","Expand access to digital health resources","Empower farming communities"]],
+           ["Economic Impact",["Reduce livestock mortality","Reduce emergency treatment costs","Protect farmer income","Enable earlier intervention"]],
+           ["Environmental & Systemic Impact",["Reduce unnecessary antibiotic usage","Support early outbreak detection","Improve livestock health surveillance","Encourage sustainable livestock management"]]]
+          .map(([t,items])=>`<div class="step-card"><h3 style="color:#fff;margin:0 0 14px;font-size:20px;">${t}</h3>${items.map(i=>`<p style="font-size:14px;margin:0 0 8px;">♥ ${i}</p>`).join("")}</div>`).join("")}
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <div class="top">
+        <div>
+          <h4>PashuSuraksha</h4>
+          <p style="max-width:280px;font-size:14px;">AI decision-support for livestock health — veterinarian-verified, offline-first, built for rural India.</p>
+        </div>
+        <div style="display:flex;gap:50px;flex-wrap:wrap;">
+          <div>
+            <p class="mono" style="font-size:11px;text-transform:uppercase;margin-bottom:10px;">Platform</p>
+            <button class="footlink" onclick="showView('farmer')">Farmer Dashboard</button>
+            <button class="footlink" onclick="showView('vet')">Veterinarian Dashboard</button>
+            <button class="footlink" onclick="showView('regional')">Regional Monitor</button>
+          </div>
+        </div>
+      </div>
+      <div style="border-top:1px solid #2A4A3C;padding-top:18px;font-size:12px;">Prototype built for hackathon demonstration. Demo data is fictional and does not represent real veterinary diagnoses.</div>
+    </div>
+  </footer>`;
+}
+
+/* ============================= FARMER DASHBOARD ============================= */
+function farmerHTML(){
+  const offlineBanner = !state.online ? `<div class="pill pill-offline" style="padding:10px 16px;">📴 ${state.syncCount} cases waiting to sync</div>` : "";
+  return `
+  <div class="page">
+    <div class="wrap">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:24px;">
+        <div>
+          <p class="mono" style="font-size:11px;text-transform:uppercase;color:var(--soil);margin:0 0 4px;">Rampur Farm</p>
+          <h1 style="font-size:30px;color:var(--forest);margin:0;">Namaste, Ramesh 👋</h1>
+        </div>
+        ${offlineBanner}
+      </div>
+
+      <div class="quick-actions">
+        <button class="qa-card" onclick="showView('analyze')"><div class="feat-icon" style="background:var(--amber-soft);">⚡</div><b>Analyze Animal</b></button>
+        <button class="qa-card"><div class="feat-icon" style="background:var(--green-soft);">➕</div><b>Add Animal</b></button>
+        <button class="qa-card" onclick="showView('animal')"><div class="feat-icon" style="background:var(--blue-soft);">💉</div><b>Vaccination Records</b></button>
+        <button class="qa-card"><div class="feat-icon" style="background:var(--red-soft);">📞</div><b>Contact Veterinarian</b></button>
+      </div>
+
+      <div class="grid" style="grid-template-columns:2fr 1fr;">
+        <div>
+          <h2 style="font-size:20px;color:var(--forest);margin:0 0 16px;">My Animals</h2>
+          <div class="grid grid-2">
+            ${ANIMALS.map(a=>`
+              <button class="animal-card" onclick="showView('animal')">
+                <div class="top-row"><span style="font-size:36px;">${a.photo}</span>${statusPill(a.status)}</div>
+                <p style="font-size:18px;font-family:'Fraunces',serif;margin:0 0 2px;">${a.id}</p>
+                <p style="font-size:12px;color:var(--ink-soft);margin:0 0 10px;">${a.breed} · ${a.age} · ${a.sex}</p>
+                <p style="font-size:12px;color:var(--ink-soft);margin:0;">🕐 Last check: ${a.lastCheck}</p>
+              </button>`).join("")}
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:20px;">
+          <div class="card" style="background:var(--red-soft);">
+            <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;"><span>⚠</span><h3 style="margin:0;color:var(--red);font-size:16px;">Health Alerts</h3></div>
+            <p style="font-size:14px;margin:0 0 4px;">COW-1024 shows signs that may need urgent attention.</p>
+            <p style="font-size:12px;color:var(--ink-soft);margin:0 0 10px;">A veterinarian has been notified and will follow up shortly.</p>
+            <button style="background:none;color:var(--red);font-size:12px;font-weight:700;" onclick="showView('animal')">View case →</button>
+          </div>
+          <div class="card">
+            <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px;"><span>💉</span><h3 style="margin:0;font-size:16px;">Upcoming Vaccinations</h3></div>
+            ${VACCINES.slice(0,2).map(v=>`<div style="display:flex;justify-content:space-between;margin-bottom:10px;"><div><p style="font-size:14px;margin:0;">${v.vaccine}</p><p style="font-size:12px;color:var(--ink-soft);margin:0;">Due ${v.next}</p></div>${statusPill(v.status)}</div>`).join("")}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ============================= ANALYZE + RESULTS ============================= */
+let analyzeStep = "form";
+let lastResult = null;
+
+function toggleSymptom(s){
+  const i = state.symptoms.indexOf(s);
+  if(i>-1) state.symptoms.splice(i,1); else state.symptoms.push(s);
+  render();
+}
+function toggleQuality(){ state.imgQuality = state.imgQuality==="good"?"poor":"good"; render(); }
+function runAnalysis(){
+  analyzeStep = "analyzing"; render();
+  setTimeout(()=>{
+    const a = assessRisk(state.symptoms);
+    const newCase = {
+      id:`CASE-${Math.floor(1000+Math.random()*9000)}`, animal:"COW-1024", species:"Cattle",
+      farmer:"Ramesh Yadav", location:"Rampur, MP", risk:a.risk, condition:a.condition,
+      confidence:a.confidence, symptoms:[...state.symptoms], date:"Just now", status:"Pending Review", vet:"Unassigned"
+    };
+    CASES = [newCase, ...CASES];
+    if(!state.online) state.syncCount++;
+    lastResult = newCase;
+    analyzeStep = "done";
+    render();
+  }, 1500);
+}
+function backToForm(){ analyzeStep="form"; render(); }
+
+function analyzeHTML(){
+  if(analyzeStep==="done" && lastResult) return resultsHTML(lastResult);
+  const offlineNote = !state.online ? `<div class="card" style="background:var(--amber-soft);display:flex;gap:8px;align-items:center;margin-bottom:20px;">📴 <span style="font-size:14px;color:var(--amber);">You're offline. This case will be stored locally and synced automatically.</span></div>` : "";
+
+  if(analyzeStep==="analyzing"){
+    return `<div class="page"><div class="wrap-sm">
+      <div class="card" style="text-align:center;padding:60px 20px;">
+        <div style="width:56px;height:56px;border-radius:50%;background:var(--green-soft);display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-size:24px;">⚡</div>
+        <h2 style="margin:0 0 8px;">Running multimodal analysis…</h2>
+        <p style="color:var(--ink-soft);margin:0;">Comparing image, symptoms, and regional health signals.</p>
+      </div>
+    </div></div>`;
+  }
+
+  return `
+  <div class="page"><div class="wrap-sm">
+    <button style="background:none;color:var(--ink-soft);font-size:14px;margin-bottom:20px;" onclick="showView('farmer')">← Back to My Farm</button>
+    <div class="eyebrow">step 1 of 2 · report</div>
+    <h1 style="font-size:30px;color:var(--forest);margin:0 0 8px;">AI Livestock Health Analysis</h1>
+    <p style="color:var(--ink-soft);margin:0 0 24px;">Upload a photo and describe what you're seeing — AI analysis is a decision-support tool, not a confirmed diagnosis.</p>
+    ${offlineNote}
+
+    <div class="card" style="margin-bottom:20px;">
+      <h2 style="font-size:18px;margin:0 0 16px;">Animal Information</h2>
+      <div class="grid grid-2">
+        ${[["Animal ID","COW-1024"],["Species","Cattle"],["Breed","Gir"],["Age","4 years"],["Sex","Female"],["Location","Rampur, MP"]]
+          .map(([l,v])=>`<div><label style="font-size:12px;color:var(--ink-soft);display:block;margin-bottom:5px;">${l}</label><input value="${v}"/></div>`).join("")}
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:20px;">
+      <h2 style="font-size:18px;margin:0 0 16px;">Upload a clear photo of the affected animal</h2>
+      <div class="upload-box">
+        <span style="font-size:48px;margin-bottom:12px;">🐄</span>
+        <div style="display:flex;gap:10px;margin-bottom:10px;">
+          <button class="btn btn-forest" style="padding:9px 16px;font-size:12px;">📷 Take Photo</button>
+          <button class="btn btn-outline" style="padding:9px 16px;font-size:12px;">⬆ Upload from Gallery</button>
+        </div>
+        <p style="font-size:12px;color:var(--ink-soft);margin:0;">Preview shown below · JPG or PNG</p>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        ${state.imgQuality==="good"
+          ? `<span style="color:var(--green);font-weight:600;font-size:14px;">✓ Image Quality: Good</span>`
+          : `<span style="color:var(--red);font-weight:600;font-size:14px;">⚠ Image Quality: Poor — please upload a clearer image</span>`}
+        <button style="background:none;text-decoration:underline;color:var(--ink-soft);font-size:12px;" onclick="toggleQuality()">toggle demo</button>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:24px;">
+      <h2 style="font-size:18px;margin:0 0 16px;">Symptoms</h2>
+      <div class="symptom-wrap">
+        ${SYMPTOMS.map(s=>`<button class="chip ${state.symptoms.includes(s)?'active':''}" onclick="toggleSymptom('${s}')">${s}</button>`).join("")}
+      </div>
+      <label style="font-size:12px;color:var(--ink-soft);display:block;margin-bottom:5px;">Describe symptoms in your own words</label>
+      <div style="display:flex;gap:8px;">
+        <textarea rows="3" placeholder="e.g. The cow has stopped eating and has sores near the mouth..."></textarea>
+        <button style="width:44px;height:44px;flex-shrink:0;border-radius:10px;background:var(--blue-soft);">🎙</button>
+      </div>
+    </div>
+
+    <button class="btn btn-primary" style="width:100%;" onclick="runAnalysis()">Analyze ⚡</button>
+  </div></div>`;
+}
+
+function resultsHTML(r){
+  const recMap = { High:"Isolate the affected animal where appropriate and contact a veterinarian for further assessment.",
+                   Moderate:"Continue monitoring closely and consult a veterinarian if symptoms persist or worsen.",
+                   Low:"No urgent action needed — continue routine monitoring." };
+  const borderColor = r.risk==="High"?"var(--red)":r.risk==="Moderate"?"var(--amber)":"var(--green)";
+  return `
+  <div class="page"><div class="wrap-sm">
+    <button style="background:none;color:var(--ink-soft);font-size:14px;margin-bottom:20px;" onclick="backToForm()">← Back to form</button>
+    <div class="eyebrow">step 2 of 2 · result</div>
+    <h1 style="font-size:30px;color:var(--forest);margin:0 0 24px;">AI Assessment</h1>
+
+    <div class="card" style="border:2px solid ${borderColor};margin-bottom:20px;">
+      <div style="display:flex;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:8px;">
+        ${riskBadge(r.risk)}
+        <span class="mono" style="font-size:11px;color:var(--ink-soft);">${r.id} · ${r.animal}</span>
+      </div>
+      <p class="mono" style="font-size:11px;text-transform:uppercase;color:var(--soil);margin:0 0 4px;">Potential condition</p>
+      <h2 style="font-size:24px;margin:0 0 14px;">${r.condition}</h2>
+      <p style="font-size:14px;color:var(--ink-soft);margin:0 0 18px;">This is an AI-generated assessment, not a confirmed veterinary diagnosis. High-risk cases require qualified veterinary verification.</p>
+
+      <div class="grid grid-3" style="margin-bottom:18px;">
+        <div style="background:var(--cream);border-radius:12px;padding:14px;"><p class="mono" style="font-size:10px;text-transform:uppercase;color:var(--ink-soft);margin:0 0 4px;">AI confidence</p><p style="font-size:20px;margin:0;font-family:'Fraunces',serif;">${r.confidence}%</p></div>
+        <div style="background:var(--cream);border-radius:12px;padding:14px;"><p class="mono" style="font-size:10px;text-transform:uppercase;color:var(--ink-soft);margin:0 0 4px;">Key visual indicators</p><p style="font-size:14px;margin:0;">Based on uploaded photo</p></div>
+        <div style="background:var(--cream);border-radius:12px;padding:14px;"><p class="mono" style="font-size:10px;text-transform:uppercase;color:var(--ink-soft);margin:0 0 4px;">Contextual factors</p><p style="font-size:14px;margin:0;">2 nearby cases this week</p></div>
+      </div>
+
+      <div style="background:var(--cream);border-radius:12px;padding:14px;margin-bottom:14px;">
+        <p class="mono" style="font-size:10px;text-transform:uppercase;color:var(--ink-soft);margin:0 0 4px;">Reported symptoms</p>
+        <p style="font-size:14px;margin:0;">${r.symptoms.join(", ")||"None specified"}</p>
+      </div>
+
+      <div style="background:var(--amber-soft);border-radius:12px;padding:14px;margin-bottom:20px;">
+        <p class="mono" style="font-size:10px;text-transform:uppercase;color:var(--amber);margin:0 0 4px;">AI recommendation</p>
+        <p style="font-size:14px;margin:0;">${recMap[r.risk]}</p>
+      </div>
+
+      <button class="btn btn-forest" style="width:100%;margin-bottom:14px;">Request Veterinary Review</button>
+      <div style="background:var(--red-soft);border-radius:10px;padding:12px;display:flex;gap:8px;">⚠ <span style="font-size:12px;color:var(--red);">AI-generated assessment — veterinary verification required for high-risk cases.</span></div>
+    </div>
+
+    <div style="display:flex;gap:12px;">
+      <button class="btn btn-outline" style="flex:1;" onclick="showView('farmer')">Back to My Farm</button>
+      <button class="btn btn-blue" style="flex:1;" onclick="showView('vet')">See Vet Dashboard →</button>
+    </div>
+  </div></div>`;
+}
+
+/* ============================= VET DASHBOARD ============================= */
+let vetFilter = "All", vetQuery = "", vetAlertOpen = true;
+function setVetFilter(f){ vetFilter=f; render(); }
+function verifyCase(id){
+  CASES = CASES.map(c=>c.id===id?{...c,status:"Verified",vet:"Dr. Anjali Mehta"}:c);
+  vetAlertOpen = false;
+  render();
+}
+function vetHTML(){
+  const highRisk = CASES.find(c=>c.risk==="High" && c.status==="Pending Review");
+  const filtered = CASES.filter(c=>{
+    const mf = vetFilter==="All" ||
+      (vetFilter==="High Risk"&&c.risk==="High") || (vetFilter==="Moderate"&&c.risk==="Moderate") || (vetFilter==="Low Risk"&&c.risk==="Low") ||
+      (vetFilter==="Pending Review"&&c.status==="Pending Review") || (vetFilter==="Verified"&&c.status==="Verified") || (vetFilter==="Resolved"&&c.status==="Resolved");
+    const mq = vetQuery==="" || JSON.stringify(c).toLowerCase().includes(vetQuery.toLowerCase());
+    return mf && mq;
+  });
+
+  const alertPanel = (vetAlertOpen && highRisk) ? `
+    <div class="card" style="background:var(--red-soft);border:1px solid var(--red);margin-bottom:30px;">
+      <div style="display:flex;gap:10px;">
+        <span style="font-size:20px;">⚠</span>
+        <div>
+          <p style="font-family:'Fraunces',serif;font-size:18px;color:var(--red);margin:0 0 4px;">Urgent Veterinary Alert</p>
+          <p style="font-size:14px;margin:0 0 10px;">High-risk livestock health case detected in your assigned region.</p>
+          <div class="grid grid-2" style="font-size:14px;color:var(--ink-soft);gap:4px;">
+            <p style="margin:0;"><b style="color:var(--ink);">Animal:</b> ${highRisk.animal}</p>
+            <p style="margin:0;"><b style="color:var(--ink);">Location:</b> ${highRisk.location}</p>
+            <p style="margin:0;"><b style="color:var(--ink);">Suspected condition:</b> ${highRisk.condition}</p>
+            <p style="margin:0;"><b style="color:var(--ink);">Time detected:</b> ${highRisk.date}</p>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:16px;">
+        <button class="btn" style="background:var(--red);color:#fff;padding:9px 16px;font-size:12px;" onclick="showView('animal')">Review Case</button>
+        <button class="btn btn-outline-red" style="padding:9px 16px;font-size:12px;">📞 Contact Farmer</button>
+        <button class="btn btn-outline-red" style="padding:9px 16px;font-size:12px;" onclick="verifyCase('${highRisk.id}')">Mark as Verified</button>
+        <button class="btn btn-outline-red" style="padding:9px 16px;font-size:12px;">Escalate</button>
+      </div>
+    </div>` : "";
+
+  return `
+  <div class="page"><div class="wrap">
+    <p class="mono" style="font-size:11px;text-transform:uppercase;color:var(--soil);margin:0 0 4px;">Dr. Anjali Mehta · Rampur Block</p>
+    <h1 style="font-size:30px;color:var(--forest);margin:0 0 24px;">Veterinarian Dashboard</h1>
+    ${alertPanel}
+    <div class="grid grid-5" style="margin-bottom:30px;">
+      ${[["Active Cases","18","📋","var(--blue)"],["High-Risk Cases","3","⚠","var(--red)"],["Pending Reviews","6","🕐","var(--amber)"],["Resolved Cases","142","✓","var(--green)"],["Animals Monitored","410","🌱","var(--field)"]]
+        .map(([l,v,i,c])=>`<div class="kpi"><div><p class="mono" style="font-size:11px;text-transform:uppercase;color:var(--ink-soft);margin:0 0 8px;">${l}</p><p style="font-size:26px;font-family:'Fraunces',serif;margin:0;">${v}</p></div><div class="icon-box" style="background:${c}22;">${i}</div></div>`).join("")}
+    </div>
+
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px;">
+        <h2 style="font-size:18px;margin:0;">Case Management</h2>
+        <input placeholder="Search cases…" style="width:180px;" oninput="vetQuery=this.value;render();" value="${vetQuery}"/>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;">
+        ${["All","High Risk","Moderate","Low Risk","Pending Review","Verified","Resolved"].map(f=>`<button class="chip ${vetFilter===f?'active':''}" onclick="setVetFilter('${f}')">${f}</button>`).join("")}
+      </div>
+      <div style="overflow-x:auto;">
+      <table style="min-width:900px;">
+        <thead><tr>${["Case ID","Animal","Farmer","Location","Risk","Condition","Date","Status","Vet","Action"].map(h=>`<th>${h}</th>`).join("")}</tr></thead>
+        <tbody>
+          ${filtered.length===0? `<tr><td colspan="10" style="text-align:center;color:var(--ink-soft);padding:30px 0;">No cases match this filter.</td></tr>` :
+            filtered.map(c=>`<tr>
+              <td class="mono" style="font-size:12px;">${c.id}</td><td>${c.animal}</td><td>${c.farmer}</td><td style="color:var(--ink-soft);">${c.location}</td>
+              <td>${riskBadge(c.risk,true)}</td><td>${c.condition}</td><td style="color:var(--ink-soft);">${c.date}</td><td>${statusPill(c.status)}</td><td style="color:var(--ink-soft);">${c.vet}</td>
+              <td><button style="background:none;color:var(--blue);font-size:12px;font-weight:700;margin-right:10px;" onclick="showView('animal')">Open</button>${c.status==="Pending Review"?`<button style="background:none;color:var(--green);font-size:12px;font-weight:700;" onclick="verifyCase('${c.id}')">Verify</button>`:""}</td>
+            </tr>`).join("")}
+        </tbody>
+      </table>
+      </div>
+    </div>
+  </div></div>`;
+}
+
+/* ============================= ANIMAL PROFILE ============================= */
+function healthChartSVG(){
+  const w=460,h=150,max=100,min=50;
+  const pts = HEALTH_TREND.map((v,i)=>{
+    const x = (i/(HEALTH_TREND.length-1))*(w-30)+15;
+    const y = h-10-((v-min)/(max-min))*(h-30);
+    return `${x},${y}`;
+  }).join(" ");
+  const dots = HEALTH_TREND.map((v,i)=>{
+    const x = (i/(HEALTH_TREND.length-1))*(w-30)+15;
+    const y = h-10-((v-min)/(max-min))*(h-30);
+    return `<circle cx="${x}" cy="${y}" r="3.5" fill="var(--field)"/><text x="${x}" y="${h-2}" font-size="10" text-anchor="middle" fill="var(--ink-soft)">${HEALTH_MONTHS[i]}</text>`;
+  }).join("");
+  return `<svg viewBox="0 0 ${w} ${h}" style="width:100%;height:170px;"><polyline points="${pts}" fill="none" stroke="var(--field)" stroke-width="2.5"/>${dots}</svg>`;
+}
+function animalHTML(){
+  const a = ANIMALS[0];
+  return `
+  <div class="page"><div class="wrap-sm" style="max-width:980px;">
+    <div class="card" style="display:flex;flex-wrap:wrap;gap:24px;align-items:center;margin-bottom:24px;">
+      <span style="font-size:60px;">${a.photo}</span>
+      <div style="flex:1;min-width:180px;">
+        <p class="mono" style="font-size:11px;text-transform:uppercase;color:var(--soil);margin:0;">Animal ID</p>
+        <h1 style="font-size:28px;color:var(--forest);margin:2px 0 8px;">${a.id}</h1>
+        ${statusPill(a.status)}
+      </div>
+      <div class="grid grid-2" style="font-size:14px;color:var(--ink-soft);gap:4px;">
+        <p style="margin:0;"><b style="color:var(--ink);">Species:</b> ${a.species}</p>
+        <p style="margin:0;"><b style="color:var(--ink);">Breed:</b> ${a.breed}</p>
+        <p style="margin:0;"><b style="color:var(--ink);">Age:</b> ${a.age}</p>
+        <p style="margin:0;"><b style="color:var(--ink);">Sex:</b> ${a.sex}</p>
+        <p style="margin:0;"><b style="color:var(--ink);">Farm:</b> ${a.farm}</p>
+        <p style="margin:0;"><b style="color:var(--ink);">Location:</b> ${a.location}</p>
+      </div>
+    </div>
+
+    <div class="grid grid-2" style="margin-bottom:24px;">
+      <div class="card">
+        <h2 style="font-size:18px;margin:0 0 14px;">💉 Vaccination Timeline</h2>
+        ${VACCINES.map(v=>`<div style="background:var(--cream);border-radius:10px;padding:10px 14px;display:flex;justify-content:space-between;margin-bottom:10px;"><div><p style="font-size:14px;margin:0;">${v.vaccine}</p><p style="font-size:12px;color:var(--ink-soft);margin:0;">Given ${v.given} · Next ${v.next}</p></div>${statusPill(v.status)}</div>`).join("")}
+      </div>
+      <div class="card">
+        <h2 style="font-size:18px;margin:0 0 8px;">📈 Health Trend</h2>
+        ${healthChartSVG()}
+        <p style="font-size:12px;color:var(--ink-soft);margin:6px 0 0;">Composite index derived from vet visits, AI assessments, and reported symptoms.</p>
+      </div>
+    </div>
+
+    <div class="grid grid-2">
+      <div class="card">
+        <h2 style="font-size:18px;margin:0 0 16px;">📋 Medical History</h2>
+        ${MEDICAL_HISTORY.map((m,i)=>`<div class="timeline-item"><div style="display:flex;flex-direction:column;align-items:center;"><div class="timeline-dot"></div>${i<MEDICAL_HISTORY.length-1?'<div class="timeline-line"></div>':''}</div><div style="padding-bottom:10px;"><p style="font-size:12px;color:var(--ink-soft);margin:0;">${m.date}</p><p style="font-size:14px;font-weight:600;margin:0;">${m.event}</p><p style="font-size:12px;color:var(--ink-soft);margin:0;">${m.detail}</p></div></div>`).join("")}
+      </div>
+      <div class="card">
+        <h2 style="font-size:18px;margin:0 0 16px;">⚡ AI Assessments</h2>
+        ${AI_ASSESSMENTS.map(r=>`<div style="background:var(--cream);border-radius:10px;padding:12px;margin-bottom:10px;"><div style="display:flex;justify-content:space-between;margin-bottom:6px;"><span style="font-size:12px;color:var(--ink-soft);">${r.date}</span>${riskBadge(r.risk,true)}</div><p style="font-size:14px;font-weight:600;margin:0;">${r.condition}</p><p style="font-size:12px;color:var(--ink-soft);margin:0;">${r.verified}</p></div>`).join("")}
+      </div>
+    </div>
+  </div></div>`;
+}
+
+/* ============================= REGIONAL MONITOR ============================= */
+let selectedRegion = null;
+function selectRegion(name){ selectedRegion = REGIONS.find(r=>r.name===name); render(); }
+function regionalHTML(){
+  const mapDots = REGIONS.map(r=>{
+    const c = COLORS[r.level];
+    const halo = r.level!=="normal" ? `<circle cx="${r.x}" cy="${r.y}" r="${r.level==='high'?22:16}" fill="${c}" opacity="0.15"/>` : "";
+    return `<g onclick="selectRegion('${r.name}')">${halo}<circle cx="${r.x}" cy="${r.y}" r="8" fill="${c}" stroke="var(--paper)" stroke-width="2"/><text x="${r.x}" y="${r.y-16}" text-anchor="middle" font-size="10" fill="var(--ink)">${r.name}</text></g>`;
+  }).join("");
+  const sel = selectedRegion ? `<div class="card" style="background:${COLORS[selectedRegion.level]}22;display:flex;justify-content:space-between;align-items:center;margin-top:14px;"><div><p style="font-family:'Fraunces',serif;font-size:16px;margin:0;">${selectedRegion.name}</p><p style="font-size:12px;color:var(--ink-soft);margin:0;">${selectedRegion.cases} active case${selectedRegion.cases!==1?'s':''} reported</p></div>📍</div>` : "";
+
+  return `
+  <div class="page"><div class="wrap">
+    <div class="eyebrow">surveillance</div>
+    <h1 style="font-size:30px;color:var(--forest);margin:0 0 8px;">Regional Livestock Health Monitor</h1>
+    <p style="color:var(--ink-soft);margin:0 0 24px;">Clusters represent AI-assisted surveillance signals and require veterinary / public-health confirmation.</p>
+
+    <div class="grid grid-5" style="margin-bottom:24px;">
+      ${[["Active Cases","23","📋","var(--blue)"],["High-Risk Cases","8","⚠","var(--red)"],["Vaccination Coverage","71%","💉","var(--green)"],["Animals Monitored","1,240","🌱","var(--field)"],["Emerging Clusters","2","📈","var(--amber)"]]
+        .map(([l,v,i,c])=>`<div class="kpi"><div><p class="mono" style="font-size:11px;text-transform:uppercase;color:var(--ink-soft);margin:0 0 8px;">${l}</p><p style="font-size:26px;font-family:'Fraunces',serif;margin:0;">${v}</p></div><div class="icon-box" style="background:${c}22;">${i}</div></div>`).join("")}
+    </div>
+
+    <div class="grid" style="grid-template-columns:2fr 1fr;">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
+          <h2 style="font-size:18px;margin:0;">Regional Map</h2>
+          <div style="display:flex;gap:12px;font-size:12px;color:var(--ink-soft);">
+            <span>🟢 Normal</span><span>🟡 Increased</span><span>🔴 Outbreak cluster</span>
+          </div>
+        </div>
+        <svg id="map-svg" viewBox="0 0 460 300" style="width:100%;background:var(--cream);border-radius:12px;">
+          ${Array.from({length:12}).map((_,i)=>`<line x1="${i*40}" y1="0" x2="${i*40}" y2="300" stroke="var(--line)" stroke-width="0.5"/>`).join("")}
+          ${mapDots}
+        </svg>
+        ${sel}
+      </div>
+      <div class="card">
+        <h2 style="font-size:16px;margin:0 0 14px;">🔎 Filters</h2>
+        ${[["Region",["All regions","Rampur","Katni","Jabalpur","Damoh"]],["Disease / condition",["All conditions","FMD","PPR","Lumpy skin disease"]],["Species",["All species","Cattle","Buffalo","Goat","Sheep"]],["Risk level",["All levels","High","Moderate","Low"]],["Date range",["Last 7 days","Last 30 days","Last 90 days"]]]
+          .map(([l,opts])=>`<div style="margin-bottom:14px;"><label style="font-size:12px;color:var(--ink-soft);display:block;margin-bottom:5px;">${l}</label><select>${opts.map(o=>`<option>${o}</option>`).join("")}</select></div>`).join("")}
+        <div style="background:var(--blue-soft);border-radius:10px;padding:10px;font-size:12px;color:var(--blue);display:flex;gap:6px;">🛡 Clusters are AI-assisted surveillance signals, pending veterinary / public-health confirmation.</div>
+      </div>
+    </div>
+  </div></div>`;
+}
+
+/* ============================= RENDER SWITCH ============================= */
+function render(){
+  document.getElementById("dbPill").innerHTML = "● demo data (standalone prototype)";
+  let html;
+  switch(state.view){
+    case "landing": case "how": case "tech": case "impact": html = landingHTML(); break;
+    case "farmer": html = farmerHTML(); break;
+    case "analyze": html = analyzeHTML(); break;
+    case "vet": html = vetHTML(); break;
+    case "animal": html = animalHTML(); break;
+    case "regional": html = regionalHTML(); break;
+    default: html = landingHTML();
+  }
+  document.getElementById("root").innerHTML = html;
+}
+
+renderNavLinks();
+render();
+</script>
+</body>
+</html>
