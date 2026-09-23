@@ -230,9 +230,7 @@ function TopNav({ view, setView, role, setRole, online, setOnline, lang, setLang
   const publicLinks = [
     { key: "landing", label: "Home" },
     { key: "how", label: "How It Works" },
-    { key: "tech", label: "AI Technology" },
     { key: "regional", label: "Disease Monitoring" },
-    { key: "impact", label: "Impact" },
   ];
   const appLinks = role === "admin"
     ? [{ key: "admin", label: "Admin Panel" }, { key: "vet", label: "All Cases" }, { key: "regional", label: "Regional Monitor" }]
@@ -247,7 +245,7 @@ function TopNav({ view, setView, role, setRole, online, setOnline, lang, setLang
         <div className="flex items-center justify-between h-16">
           <button onClick={() => setView("landing")} className="flex items-center gap-2 shrink-0">
             <span className="text-2xl">🐄</span>
-            <span className="font-display text-xl text-white tracking-tight">PashuSuraksha</span>
+            <span className="font-display text-xl text-white tracking-tight">PashuSanket</span>
           </button>
 
           <nav className="hidden lg:flex items-center gap-7">
@@ -362,8 +360,8 @@ function Hero({ setView }) {
               An AI-powered livestock health platform that combines image recognition, symptom analysis, and contextual health data to detect potential diseases early and connect high-risk cases with veterinary support.
             </p>
             <div className="flex flex-wrap gap-3 mb-10">
-              <button onClick={() => setView("analyze")} className="rounded-full px-6 py-3 font-body font-semibold text-sm flex items-center gap-2" style={{ backgroundColor: C.amber, color: "white" }}>
-                Analyze Livestock <ChevronRight size={16} />
+              <button onClick={() => setView("login")} className="rounded-full px-6 py-3 font-body font-semibold text-sm flex items-center gap-2" style={{ backgroundColor: C.amber, color: "white" }}>
+                Login to Dashboard <ChevronRight size={16} />
               </button>
               <button onClick={() => setView("how")} className="rounded-full px-6 py-3 font-body font-semibold text-sm border" style={{ borderColor: "#3A5548", color: "white" }}>
                 Explore How It Works
@@ -636,7 +634,7 @@ function ResearchAbout() {
             The platform's design is informed by digital livestock surveillance, animal health monitoring, disease reporting, multimodal deep learning, computer vision, and early livestock disease detection research — including frameworks referenced by the FAO (Food and Agriculture Organization) and WOAH-WAHIS (World Organisation for Animal Health).
           </p>
           <p className="font-body text-xs" style={{ color: C.inkSoft }}>
-            PashuSuraksha is not officially endorsed or certified by FAO or WOAH. These organizations are referenced as sources of domain practice, not as partners.
+            PashuSanket is not officially endorsed or certified by FAO or WOAH. These organizations are referenced as sources of domain practice, not as partners.
           </p>
         </div>
         <div>
@@ -665,7 +663,7 @@ function Footer({ setView }) {
       <div className="max-w-7xl mx-auto px-5 md:px-8 py-14">
         <div className="flex flex-col md:flex-row justify-between gap-10 mb-10">
           <div>
-            <span className="font-display text-xl text-white">PashuSuraksha</span>
+            <span className="font-display text-xl text-white">PashuSanket</span>
             <p className="font-body text-sm mt-3 max-w-xs" style={{ color: "#8FA898" }}>AI decision-support for livestock health — veterinarian-verified, offline-first, built for rural India.</p>
           </div>
           <div className="flex gap-14">
@@ -688,7 +686,7 @@ function Footer({ setView }) {
         </div>
         <div className="pt-6 flex flex-col sm:flex-row justify-between gap-2" style={{ borderTop: "1px solid #2A4A3C" }}>
           <p className="font-body text-xs" style={{ color: "#6E8578" }}>Prototype built for hackathon demonstration. Demo data is fictional and does not represent real veterinary diagnoses.</p>
-          <p className="font-body text-xs" style={{ color: "#6E8578" }}>© 2026 PashuSuraksha</p>
+          <p className="font-body text-xs" style={{ color: "#6E8578" }}>© 2026 PashuSanket</p>
         </div>
       </div>
     </footer>
@@ -701,10 +699,6 @@ function LandingPage({ setView }) {
       <Hero setView={setView} />
       <ProblemSection />
       <SolutionTimeline setView={setView} />
-      <TechArchitecture />
-      <TechStack />
-      <RiskMitigation />
-      <ImpactSection />
       <ResearchAbout />
       <Footer setView={setView} />
     </>
@@ -1375,7 +1369,7 @@ function LoginPage({ setView, onLogin, users = MOCK_USERS }) {
         <div className="text-center mb-8">
           <span className="text-4xl">🐄</span>
           <h1 className="font-display text-3xl mt-3" style={{ color: C.forest }}>Welcome back</h1>
-          <p className="font-body text-sm mt-1" style={{ color: C.inkSoft }}>Sign in to PashuSuraksha</p>
+          <p className="font-body text-sm mt-1" style={{ color: C.inkSoft }}>Sign in to PashuSanket</p>
         </div>
 
         <div className="rounded-2xl p-7" style={{ backgroundColor: C.paper, border: `1px solid ${C.line}` }}>
@@ -1490,7 +1484,7 @@ function RegisterPage({ setView, onRegister }) {
         <div className="text-center mb-8">
           <span className="text-4xl">🐄</span>
           <h1 className="font-display text-3xl mt-3" style={{ color: C.forest }}>Create your account</h1>
-          <p className="font-body text-sm mt-1" style={{ color: C.inkSoft }}>Join PashuSuraksha as a farmer or veterinarian</p>
+          <p className="font-body text-sm mt-1" style={{ color: C.inkSoft }}>Join PashuSanket as a farmer or veterinarian</p>
         </div>
 
         <div className="rounded-2xl p-7" style={{ backgroundColor: C.paper, border: `1px solid ${C.line}` }}>
